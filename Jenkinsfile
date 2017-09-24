@@ -1,5 +1,6 @@
 #!groovy
 
+@Library('github.com/fabric8io/kubernetes-client@master')
 @Library('github.com/fabric8io/fabric8-pipeline-library@master')
 
 def versionPrefix = ""
