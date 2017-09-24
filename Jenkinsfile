@@ -1,9 +1,12 @@
-#!/usr/bin/groovy
+#!groovy
+
+@Library('github.com/fabric8io/fabric8-pipeline-library@master')
+
 def versionPrefix = ""
 try {
-  versionPrefix = VERSION_PREFIX
+    versionPrefix = VERSION_PREFIX
 } catch (Throwable e) {
-  versionPrefix = "1.0"
+    versionPrefix = "1.0"
 }
 
 def canaryVersion = "${versionPrefix}.${env.BUILD_NUMBER}"
@@ -11,21 +14,20 @@ def canaryVersion = "${versionPrefix}.${env.BUILD_NUMBER}"
 def utils = new io.fabric8.Utils()
 def label = "buildpod.${env.JOB_NAME}.${env.BUILD_NUMBER}".replace('-', '_').replace('/', '_')
 
-mavenNode{
-  def envStage = utils.environmentNamespace('petstore-staging')
-  def envProd = utils.environmentNamespace('petstore-prod')
-  
-  git = git branch: 'master', credentialsId: 'eformat', url: 'https://github.com/eformat/ps'
+mavenNode {
+    def envStage = utils.environmentNamespace('petstore-staging')
+    def envProd = utils.environmentNamespace('petstore-prod')
 
-  container(name: 'maven') {
+    git = git branch: 'master', credentialsId: 'eformat', url: 'https://github.com/eformat/ps'
 
-    stage 'Build Release'
-    mavenCanaryRelease {
-      version = canaryVersion
+    container(name: 'maven') {
+
+        stage 'Build Release'
+        mavenCanaryRelease {
+            version = canaryVersion
+        }
+
+        stage 'Rollout Production'
+        kubernetesApply(environment: envProd)
     }
-
-    stage 'Rollout Production'
-    kubernetesApply(environment: envProd)
-
-  }
 }
