@@ -4,7 +4,7 @@ try {
     timeout(time: 20, unit: 'MINUTES') {
 
         def project = "${env.PROJECT_NAME}"
-        def branch = "${env.BRANCH_NAME}"
+        def branch = "${env.BRANCH_NAME}" || "master"
         branch = branch.toLowerCase()
 
         echo "Project is: ${env.PROJECT_NAME}"
