@@ -98,7 +98,7 @@ def getDeployName(String name) {
 
 // Get Service Name
 def getServiceName(String name) {
-    def cmd3 = $/service=$(oc get svc -l app=${name} -o name);echo $${service##service/}/$
+    def cmd3 = $/service=$(oc get svc -l app=${name} -o name);echo $${services##services/}/$
     svc = sh(returnStdout: true, script: cmd3).trim()
     return svc
 }
