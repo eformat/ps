@@ -13,59 +13,61 @@ try {
         echo "Job Name is: ${env.JOB_NAME}"
         def commit_id, source, origin_url, name
 
-        stage('Initialise') {
-            // Checkout code from repository - we want commit id and name
-            checkout scm
-            dir("${WORKSPACE}") {
-                commit_id = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
-                echo "Git Commit is: ${commit_id}"
-                def cmd0 = $/name=$(git config --local remote.origin.url); name=$${name##*/}; echo $${name%%.git}/$
-                name = sh(returnStdout: true, script: cmd0).trim()
-                name = "${name}-${branch}"
-                echo "Name is: ${name}"
-            }
-            origin_url = sh(returnStdout: true, script: 'git config --get remote.origin.url').trim()
-            source = "${origin_url}#${commit_id}"
-            echo "Source URL is: ${source}"
-        }
-
-        stage('Build') {
-            // Start Build or Create initial app if doesn't exist
-            if (getBuildName(name)) {
-                echo 'Building image'
-                def build = getBuildName(name)
-                try {
-                    sh "oc start-build ${build} --from-file=deployments/ROOT.war?raw=true --follow"
-                } catch (e) {
-                    echo "build failed"
-                    currentBuild.result = 'FAILURE'
-                    throw e
+        node('maven') {
+            stage('Initialise') {
+                // Checkout code from repository - we want commit id and name
+                checkout scm
+                dir("${WORKSPACE}") {
+                    commit_id = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+                    echo "Git Commit is: ${commit_id}"
+                    def cmd0 = $/name=$(git config --local remote.origin.url); name=$${name##*/}; echo $${name%%.git}/$
+                    name = sh(returnStdout: true, script: cmd0).trim()
+                    name = "${name}-${branch}"
+                    echo "Name is: ${name}"
                 }
-            } else {
-                echo 'Creating build'
-                try {
-                    sh "oc new-build --strategy=source --name=${name} --binary -l app=${name} -i jboss-eap70-openshift"
-                    sh "oc start-build ${build} --from-file=deployments/ROOT.war?raw=true --follow"
-                } catch (e) {
-                    echo "build exists"
+                origin_url = sh(returnStdout: true, script: 'git config --get remote.origin.url').trim()
+                source = "${origin_url}#${commit_id}"
+                echo "Source URL is: ${source}"
+            }
+
+            stage('Build') {
+                // Start Build or Create initial app if doesn't exist
+                if (getBuildName(name)) {
+                    echo 'Building image'
+                    def build = getBuildName(name)
+                    try {
+                        sh "oc start-build ${build} --from-file=deployments/ROOT.war?raw=true --follow"
+                    } catch (e) {
+                        echo "build failed"
+                        currentBuild.result = 'FAILURE'
+                        throw e
+                    }
+                } else {
+                    echo 'Creating build'
+                    try {
+                        sh "oc new-build --strategy=source --name=${name} --binary -l app=${name} -i jboss-eap70-openshift"
+                        sh "oc start-build ${build} --from-file=deployments/ROOT.war?raw=true --follow"
+                    } catch (e) {
+                        echo "build exists"
+                    }
                 }
             }
-        }
 
-        stage('Deploy') {
-            echo 'Deploying image'
-            def deploy = getDeployName(name)
-            if (deploy) {
-                openshiftDeploy(deploymentConfig: deploy)
-            } else {
-                echo 'Creating deployment'
-                sh "oc new-app ${name}"
+            stage('Deploy') {
+                echo 'Deploying image'
+                def deploy = getDeployName(name)
+                if (deploy) {
+                    openshiftDeploy(deploymentConfig: deploy)
+                } else {
+                    echo 'Creating deployment'
+                    sh "oc new-app ${name}"
+                }
             }
-        }
 
-        stage('Create Route') {
-            echo 'Creating a route to application'
-            createRoute(name)
+            stage('Create Route') {
+                echo 'Creating a route to application'
+                createRoute(name)
+            }
         }
     }
 
