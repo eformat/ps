@@ -90,7 +90,7 @@ def getBuildName(String name) {
 
 // Get Deploy Config Name
 def getDeployName(String name) {
-    def cmd2 = $/deploymentconfig=$(oc get dc -l app=${name} -o name);echo $${deploymentconfig##deploymentconfig/}/$
+    def cmd2 = $/deploymentconfigs=$(oc get dc -l app=${name} -o name);echo $${deploymentconfigs##deploymentconfigs/}/$
     dply = sh(returnStdout: true, script: cmd2).trim()
     return dply
 }
