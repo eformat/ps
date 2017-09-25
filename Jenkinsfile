@@ -37,7 +37,7 @@ try {
                 } else {
                     echo 'Creating build'
                     try {
-                        sh "oc new-build --strategy=source --name=${name} --binary -l app=${name} -l commit=${commit_id} -i eap70-openshift"
+                        sh "oc new-build --strategy=source --name=${name} --binary -l app=${name},commit=${commit_id} -i eap70-openshift"
                         sh "oc start-build ${name} --from-file=deployments/ROOT.war --follow"
                     } catch (e) {
                         echo "build creation failed"
@@ -54,7 +54,7 @@ try {
                     openshiftDeploy(deploymentConfig: deploy)
                 } else {
                     echo 'Creating deployment'
-                    sh "oc new-app ${name} --name=${name} -l app=${name} -l commit=${commit_id}"
+                    sh "oc new-app ${name} --name=${name} -l app=${name},commit=${commit_id}"
                 }
             }
 
