@@ -38,7 +38,8 @@ objects:
       secrets: null
       type: "Git"
       git:
-        uri: ${PS_GIT_URI}#${PS_GIT_REF}
+        uri: ${PS_GIT_URI}
+        ref: ${PS_GIT_REF}
     strategy:
       jenkinsPipelineStrategy:
         env:
