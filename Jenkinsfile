@@ -25,26 +25,25 @@ try {
 
             stage('Build') {
                 // Start Build or Create initial app if doesn't exist
-                if (getBuildName(name)) {
-                    echo 'Building image'
-                    try {
-                        sh "oc start-build ${name} --from-file=deployments/ROOT.war?raw=true --follow"
-                    } catch (e) {
-                        echo "build failed"
-                        currentBuild.result = 'FAILURE'
-                        throw e
-                    }
-                } else {
+                if (!getBuildName(name)) {
                     echo 'Creating build'
                     try {
                         sh "oc new-build --strategy=source --name=${name} --binary -l app=${name},commit=${commit_id} -i eap70-openshift"
-                        sh "oc start-build ${name} --from-file=deployments/ROOT.war --follow"
                     } catch (e) {
                         echo "build creation failed"
                         currentBuild.result = 'FAILURE'
                         throw e
                     }
                 }
+                echo 'Building image'
+                try {
+                    sh "oc start-build ${name} --from-file=deployments/ROOT.war --follow"
+                } catch (e) {
+                    echo "build failed"
+                    currentBuild.result = 'FAILURE'
+                    throw e
+                }
+
             }
 
             stage('Deploy') {
