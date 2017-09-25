@@ -4,9 +4,6 @@ try {
     timeout(time: 20, unit: 'MINUTES') {
 
         def project = "${env.PROJECT_NAME}"
-        def branch = "${env.BRANCH_NAME}" || "master"
-        branch = branch.toLowerCase()
-
         echo "Project is: ${env.PROJECT_NAME}"
         echo "Build Number is: ${env.BUILD_NUMBER}"
         echo "Branch name is: ${env.BRANCH_NAME}"
@@ -22,7 +19,7 @@ try {
                     echo "Git Commit is: ${commit_id}"
                     def cmd0 = $/name=$(git config --local remote.origin.url); name=$${name##*/}; echo $${name%%.git}/$
                     name = sh(returnStdout: true, script: cmd0).trim()
-                    name = "${name}-${branch}"
+                    name = "${name}-${commit_id}"
                     echo "Name is: ${name}"
                 }
                 origin_url = sh(returnStdout: true, script: 'git config --get remote.origin.url').trim()
