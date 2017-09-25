@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Template
 labels:
-  application: mapsapp-pipeline
+  application: pipeline
 metadata:
-  name: mapsapp-pipeline
+  name: pipeline
 parameters:
 - description: Petstore application source URI
   displayName: Petstore Source URI
@@ -30,8 +30,8 @@ objects:
   kind: BuildConfig
   metadata:
     labels:
-      build: mapsapp-pipeline
-    name: mapsapp-pipeline
+      build: pipeline
+    name: pipeline
   spec:
     runPolicy: Serial
     source:
