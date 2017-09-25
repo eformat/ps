@@ -36,8 +36,9 @@ try {
                 def build = getBuildName(name)
                 try {
                     sh "oc start-build ${build} --from-file=deployments/ROOT.war?raw=true --follow"
-                } catch (Exception e) {
+                } catch (e) {
                     echo "build failed"
+                    currentBuild.result = 'FAILURE'
                     throw e
                 }
             } else {
@@ -45,7 +46,7 @@ try {
                 try {
                     sh "oc new-build --strategy=source --name=${name} --binary -l app=${name} -i jboss-eap70-openshift"
                     sh "oc start-build ${build} --from-file=deployments/ROOT.war?raw=true --follow"
-                } catch (Exception e) {
+                } catch (e) {
                     echo "build exists"
                 }
             }
@@ -68,48 +69,48 @@ try {
         }
     }
 
-    // Expose service to create a route
-    def createRoute(String name) {
-        try {
-            def service = getServiceName(name)
-            sh "oc expose svc ${service}"
-        } catch (Exception e) {
-            echo "route exists"
-        }
-    }
-
-    // Get Build Name
-    def getBuildName(String name) {
-        def cmd1 = $/buildconfig=$(oc get bc -l app=${name} -o name);echo $${buildconfig##buildconfig/}/$
-        bld = sh(returnStdout: true, script: cmd1).trim()
-        return bld
-    }
-
-    // Get Deploy Config Name
-    def getDeployName(String name) {
-        def cmd2 = $/deploymentconfig=$(oc get dc -l app=${name} -o name);echo $${deploymentconfig##deploymentconfig/}/$
-        dply = sh(returnStdout: true, script: cmd2).trim()
-        return dply
-    }
-
-    // Get Service Name
-    def getServiceName(String name) {
-        def cmd3 = $/service=$(oc get svc -l app=${name} -o name);echo $${service##service/}/$
-        svc = sh(returnStdout: true, script: cmd3).trim()
-        return svc
-    }
-
-    // Set Build Ref
-    def setBuildRef(String build, String source, String commit_id) {
-        def cmd4 = $/oc patch bc/"${build}" -p $'{\"spec\":{\"source\":{\"git\":{\"uri\":\"${source}\",\"ref\": \"${
-            commit_id
-        }\"}}}}$'/$
-        sh cmd4
-    }
-
 } catch (err) {
     echo "in catch block"
     echo "Caught: ${err}"
     currentBuild.result = 'FAILURE'
     throw err
+}
+
+// Expose service to create a route
+def createRoute(String name) {
+    try {
+        def service = getServiceName(name)
+        sh "oc expose svc ${service}"
+    } catch (Exception e) {
+        echo "route exists"
+    }
+}
+
+// Get Build Name
+def getBuildName(String name) {
+    def cmd1 = $/buildconfig=$(oc get bc -l app=${name} -o name);echo $${buildconfig##buildconfig/}/$
+    bld = sh(returnStdout: true, script: cmd1).trim()
+    return bld
+}
+
+// Get Deploy Config Name
+def getDeployName(String name) {
+    def cmd2 = $/deploymentconfig=$(oc get dc -l app=${name} -o name);echo $${deploymentconfig##deploymentconfig/}/$
+    dply = sh(returnStdout: true, script: cmd2).trim()
+    return dply
+}
+
+// Get Service Name
+def getServiceName(String name) {
+    def cmd3 = $/service=$(oc get svc -l app=${name} -o name);echo $${service##service/}/$
+    svc = sh(returnStdout: true, script: cmd3).trim()
+    return svc
+}
+
+// Set Build Ref
+def setBuildRef(String build, String source, String commit_id) {
+    def cmd4 = $/oc patch bc/"${build}" -p $'{\"spec\":{\"source\":{\"git\":{\"uri\":\"${source}\",\"ref\": \"${
+        commit_id
+    }\"}}}}$'/$
+    sh cmd4
 }
