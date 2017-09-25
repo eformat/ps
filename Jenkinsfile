@@ -45,7 +45,7 @@ try {
                 } else {
                     echo 'Creating build'
                     try {
-                        sh "oc new-build --strategy=source --name=${name} --binary -l app=${name} -i jboss-eap70-openshift"
+                        sh "oc new-build --strategy=source --name=${name} --binary -l app=${name} -i eap70-openshift"
                         sh "oc start-build ${build} --from-file=deployments/ROOT.war?raw=true --follow"
                     } catch (e) {
                         echo "build exists"
