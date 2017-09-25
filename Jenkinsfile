@@ -3,10 +3,7 @@
 try {
     timeout(time: 20, unit: 'MINUTES') {
 
-        def project = "${env.PROJECT_NAME}"
-        echo "Project is: ${env.PROJECT_NAME}"
         echo "Build Number is: ${env.BUILD_NUMBER}"
-        echo "Branch name is: ${env.BRANCH_NAME}"
         echo "Job Name is: ${env.JOB_NAME}"
         def commit_id, source, origin_url, name
 
@@ -19,7 +16,6 @@ try {
                     echo "Git Commit is: ${commit_id}"
                     def cmd0 = $/name=$(git config --local remote.origin.url); name=$${name##*/}; echo $${name%%.git}/$
                     name = sh(returnStdout: true, script: cmd0).trim()
-                    name = "${name}-${commit_id}"
                     echo "Name is: ${name}"
                 }
                 origin_url = sh(returnStdout: true, script: 'git config --get remote.origin.url').trim()
@@ -31,9 +27,8 @@ try {
                 // Start Build or Create initial app if doesn't exist
                 if (getBuildName(name)) {
                     echo 'Building image'
-                    def build = getBuildName(name)
                     try {
-                        sh "oc start-build ${build} --from-file=deployments/ROOT.war?raw=true --follow"
+                        sh "oc start-build ${name} --from-file=deployments/ROOT.war?raw=true --follow"
                     } catch (e) {
                         echo "build failed"
                         currentBuild.result = 'FAILURE'
@@ -42,8 +37,8 @@ try {
                 } else {
                     echo 'Creating build'
                     try {
-                        sh "oc new-build --strategy=source --name=${name} --binary -l app=${name} -i eap70-openshift"
-                        sh "oc start-build ${build} --from-file=deployments/ROOT.war?raw=true --follow"
+                        sh "oc new-build --strategy=source --name=${name} --binary -l app=${name} -l commit=${commit_id} -i eap70-openshift"
+                        sh "oc start-build ${name} --from-file=deployments/ROOT.war?raw=true --follow"
                     } catch (e) {
                         echo "build exists"
                     }
@@ -57,7 +52,7 @@ try {
                     openshiftDeploy(deploymentConfig: deploy)
                 } else {
                     echo 'Creating deployment'
-                    sh "oc new-app ${name}"
+                    sh "oc new-app ${name} --name=${name} -l app=${name} -l commit=${commit_id}"
                 }
             }
 
