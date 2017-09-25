@@ -38,9 +38,11 @@ try {
                     echo 'Creating build'
                     try {
                         sh "oc new-build --strategy=source --name=${name} --binary -l app=${name} -l commit=${commit_id} -i eap70-openshift"
-                        sh "oc start-build ${name} --from-file=deployments/ROOT.war?raw=true --follow"
+                        sh "oc start-build ${name} --from-file=deployments/ROOT.war --follow"
                     } catch (e) {
-                        echo "build exists"
+                        echo "build creation failed"
+                        currentBuild.result = 'FAILURE'
+                        throw e
                     }
                 }
             }
